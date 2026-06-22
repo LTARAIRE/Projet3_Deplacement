@@ -1,0 +1,9 @@
+# Walk action: move with given velocity for a duration
+geometry_msgs/Twist target_velocity
+float64 duration_sec
+---
+bool success
+float64 distance_traveled
+---
+float64 elapsed_time
+float64 current_speed

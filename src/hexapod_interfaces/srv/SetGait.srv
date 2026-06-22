@@ -1,0 +1,5 @@
+# Change the gait pattern
+string gait_type  # "tripod", "wave", "ripple"
+---
+bool success
+string message

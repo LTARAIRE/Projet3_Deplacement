@@ -1,0 +1,202 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="hexapod">
+
+  <!-- ============ PARAMETERS ============ -->
+  <xacro:property name="body_radius" value="0.07"/>
+  <xacro:property name="body_height" value="0.03"/>
+  <xacro:property name="body_mass" value="0.9"/>
+
+  <xacro:property name="coxa_length" value="0.09"/>
+  <xacro:property name="femur_length" value="0.185"/>
+  <xacro:property name="tibia_length" value="0.250"/>
+
+  <xacro:property name="coxa_radius" value="0.015"/>
+  <xacro:property name="femur_radius" value="0.012"/>
+  <xacro:property name="tibia_radius" value="0.010"/>
+
+  <xacro:property name="leg_mass" value="0.08"/>
+  <xacro:property name="joint_effort" value="1.5"/>
+  <xacro:property name="joint_velocity" value="6.28"/>
+
+  <!-- ============ MATERIALS ============ -->
+  <material name="orange">
+    <color rgba="0.97 0.53 0.004 1.0"/>
+  </material>
+  <material name="grey">
+    <color rgba="0.5 0.5 0.5 1.0"/>
+  </material>
+  <material name="dark_grey">
+    <color rgba="0.3 0.3 0.3 1.0"/>
+  </material>
+
+  <!-- ============ INERTIA HELPERS ============ -->
+  <xacro:macro name="cylinder_inertia" params="mass radius length">
+    <inertial>
+      <mass value="${mass}"/>
+      <inertia
+        ixx="${mass*(3*radius*radius + length*length)/12}" ixy="0" ixz="0"
+        iyy="${mass*(3*radius*radius + length*length)/12}" iyz="0"
+        izz="${mass*radius*radius/2}"/>
+    </inertial>
+  </xacro:macro>
+
+  <xacro:macro name="box_inertia" params="mass x y z">
+    <inertial>
+      <mass value="${mass}"/>
+      <inertia
+        ixx="${mass*(y*y+z*z)/12}" ixy="0" ixz="0"
+        iyy="${mass*(x*x+z*z)/12}" iyz="0"
+        izz="${mass*(x*x+y*y)/12}"/>
+    </inertial>
+  </xacro:macro>
+
+  <!-- ============ BODY ============ -->
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <cylinder radius="${body_radius}" length="${body_height}"/>
+      </geometry>
+      <material name="orange"/>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder radius="${body_radius}" length="${body_height}"/>
+      </geometry>
+    </collision>
+    <xacro:box_inertia mass="${body_mass}" x="${2*body_radius}" y="${2*body_radius}" z="${body_height}"/>
+  </link>
+
+  <!-- ============ LEG MACRO ============ -->
+  <xacro:macro name="hexapod_leg" params="prefix mount_x mount_y mount_angle">
+
+    <!-- COXA -->
+    <link name="${prefix}_coxa_link">
+      <visual>
+        <origin xyz="${coxa_length/2} 0 0" rpy="0 ${pi/2} 0"/>
+        <geometry>
+          <cylinder radius="${coxa_radius}" length="${coxa_length}"/>
+        </geometry>
+        <material name="grey"/>
+      </visual>
+      <collision>
+        <origin xyz="${coxa_length/2} 0 0" rpy="0 ${pi/2} 0"/>
+        <geometry>
+          <cylinder radius="${coxa_radius}" length="${coxa_length}"/>
+        </geometry>
+      </collision>
+      <xacro:cylinder_inertia mass="${leg_mass}" radius="${coxa_radius}" length="${coxa_length}"/>
+    </link>
+
+    <joint name="${prefix}_coxa_joint" type="revolute">
+      <parent link="base_link"/>
+      <child link="${prefix}_coxa_link"/>
+      <origin xyz="${mount_x} ${mount_y} 0" rpy="0 0 ${mount_angle}"/>
+      <axis xyz="0 0 1"/>
+      <limit lower="${-pi/3}" upper="${pi/3}" effort="${joint_effort}" velocity="${joint_velocity}"/>
+    </joint>
+
+    <!-- FEMUR -->
+    <link name="${prefix}_femur_link">
+      <visual>
+        <origin xyz="${femur_length/2} 0 0" rpy="0 ${pi/2} 0"/>
+        <geometry>
+          <cylinder radius="${femur_radius}" length="${femur_length}"/>
+        </geometry>
+        <material name="dark_grey"/>
+      </visual>
+      <collision>
+        <origin xyz="${femur_length/2} 0 0" rpy="0 ${pi/2} 0"/>
+        <geometry>
+          <cylinder radius="${femur_radius}" length="${femur_length}"/>
+        </geometry>
+      </collision>
+      <xacro:cylinder_inertia mass="${leg_mass}" radius="${femur_radius}" length="${femur_length}"/>
+    </link>
+
+    <joint name="${prefix}_femur_joint" type="revolute">
+      <parent link="${prefix}_coxa_link"/>
+      <child link="${prefix}_femur_link"/>
+      <origin xyz="${coxa_length} 0 0" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+      <limit lower="${-pi/2}" upper="${pi/2}" effort="${joint_effort}" velocity="${joint_velocity}"/>
+    </joint>
+
+    <!-- TIBIA -->
+    <link name="${prefix}_tibia_link">
+      <visual>
+        <origin xyz="${tibia_length/2} 0 0" rpy="0 ${pi/2} 0"/>
+        <geometry>
+          <cylinder radius="${tibia_radius}" length="${tibia_length}"/>
+        </geometry>
+        <material name="orange"/>
+      </visual>
+      <collision>
+        <origin xyz="${tibia_length/2} 0 0" rpy="0 ${pi/2} 0"/>
+        <geometry>
+          <cylinder radius="${tibia_radius}" length="${tibia_length}"/>
+        </geometry>
+      </collision>
+      <xacro:cylinder_inertia mass="${leg_mass}" radius="${tibia_radius}" length="${tibia_length}"/>
+    </link>
+
+    <joint name="${prefix}_tibia_joint" type="revolute">
+      <parent link="${prefix}_femur_link"/>
+      <child link="${prefix}_tibia_link"/>
+      <origin xyz="${femur_length} 0 0" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+      <limit lower="${-2*pi/3}" upper="${pi/6}" effort="${joint_effort}" velocity="${joint_velocity}"/>
+    </joint>
+
+    <!-- FOOT (virtual link for tip tracking) -->
+    <link name="${prefix}_foot_link">
+      <visual>
+        <geometry>
+          <sphere radius="0.008"/>
+        </geometry>
+        <material name="dark_grey"/>
+      </visual>
+    </link>
+
+    <joint name="${prefix}_foot_fixed" type="fixed">
+      <parent link="${prefix}_tibia_link"/>
+      <child link="${prefix}_foot_link"/>
+      <origin xyz="${tibia_length} 0 0" rpy="0 0 0"/>
+    </joint>
+
+  </xacro:macro>
+
+  <!-- ============ INSTANTIATE 6 LEGS ============ -->
+  <!-- Leg numbering: 1=right_front, 2=right_middle, 3=right_rear,
+                      4=left_rear, 5=left_middle, 6=left_front -->
+
+  <xacro:hexapod_leg prefix="leg1"
+    mount_x="${body_radius * cos(-pi/6)}"
+    mount_y="${body_radius * sin(-pi/6)}"
+    mount_angle="${-pi/6}"/>
+
+  <xacro:hexapod_leg prefix="leg2"
+    mount_x="${body_radius * cos(-pi/2)}"
+    mount_y="${body_radius * sin(-pi/2)}"
+    mount_angle="${-pi/2}"/>
+
+  <xacro:hexapod_leg prefix="leg3"
+    mount_x="${body_radius * cos(-5*pi/6)}"
+    mount_y="${body_radius * sin(-5*pi/6)}"
+    mount_angle="${-5*pi/6}"/>
+
+  <xacro:hexapod_leg prefix="leg4"
+    mount_x="${body_radius * cos(5*pi/6)}"
+    mount_y="${body_radius * sin(5*pi/6)}"
+    mount_angle="${5*pi/6}"/>
+
+  <xacro:hexapod_leg prefix="leg5"
+    mount_x="${body_radius * cos(pi/2)}"
+    mount_y="${body_radius * sin(pi/2)}"
+    mount_angle="${pi/2}"/>
+
+  <xacro:hexapod_leg prefix="leg6"
+    mount_x="${body_radius * cos(pi/6)}"
+    mount_y="${body_radius * sin(pi/6)}"
+    mount_angle="${pi/6}"/>
+
+</robot>
