@@ -1,0 +1,22 @@
+hexapod_locomotion:
+  ros__parameters:
+    # Body geometry
+    body_radius: 0.07
+    body_height: 0.15
+
+    # Leg segment lengths (from URDF analysis)
+    coxa_length: 0.09
+    femur_length: 0.185
+    tibia_length: 0.250
+
+    # Control loop rate (Hz)
+    control_rate: 50.0
+
+    # Gait parameters
+    gait_type: "tripod"      # tripod, wave, ripple
+    step_height: 0.04        # foot lift height (m)
+    cycle_period: 1.0        # gait cycle duration (s)
+
+    # Velocity limits
+    max_linear_speed: 0.3    # m/s
+    max_angular_speed: 1.0   # rad/s

@@ -1,0 +1,7 @@
+# Compute inverse kinematics for a single leg
+uint8 leg_index
+geometry_msgs/Point target_position
+---
+bool success
+LegAngles angles
+string message
