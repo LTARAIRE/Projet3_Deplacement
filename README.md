@@ -10,12 +10,20 @@ Paquet ROS2 permettant de commander un hexapode via `geometry_msgs/TwistStamped`
 |---------|-------------|
 | `hexapod_interfaces` | Messages, services et actions custom |
 | `hexapod_locomotion` | Cinématique inverse, générateur de démarche, noeuds ROS2 |
+| `phantomx_description` | Modèle 3D réel de l'hexapode **PhantomX** (URDF + meshes STL) |
+
+> Le modèle visualisé est le **PhantomX** (3 DOF/patte : `j_c1`/`j_thigh`/`j_tibia`).
+> La cinématique inverse et la démarche tripode sont reprises du modèle de
+> simulation PhantomX de référence (constantes `PHANTOMX_SIMULATION`).
 
 ## Prérequis
 
-- **Linux** (testé sur Linux Mint / Ubuntu 22.04+)
-- **ROS2 Humble** ou **Jazzy**
+- **Linux** (testé sur Linux Mint 22.x / Ubuntu 24.04)
+- **ROS2 Jazzy** (Ubuntu 24.04 / Mint 22.x) ou **Humble** (Ubuntu 22.04 / Mint 21.x)
 - Python 3.10+
+
+> Si ROS2 n'est pas installé, le script `setup_and_launch.sh` l'installe
+> automatiquement (détection de la base Ubuntu, gestion du codename Mint).
 
 ## Installation rapide
 
@@ -75,6 +83,13 @@ ros2 launch hexapod_locomotion teleop.launch.py
 |-------|------|-----------|
 | `/cmd_vel` | `geometry_msgs/TwistStamped` | Input |
 | `/joint_states` | `sensor_msgs/JointState` | Output |
+| `/tf` (`odom`→`base_link`) | `tf2_msgs/TFMessage` | Output (odométrie intégrée) |
+| `/environment` | `visualization_msgs/MarkerArray` | Output (sol) |
+
+Le robot **se déplace réellement** dans le repère `odom` (intégration de la
+consigne Twist) et **repose sur le sol** (paramètre `base_height`). La démarche
+tripode est générée en repère corps : à l'appui le pied pousse à l'opposé de la
+vitesse commandée (le corps avance dans le sens commandé), au transfert il se lève.
 
 ### Services
 
@@ -97,17 +112,20 @@ src/
 │   ├── msg/                     # LegAngles, HexapodState
 │   ├── srv/                     # SetGait, GetLegIK
 │   └── action/                  # Walk
+├── phantomx_description/        # Modèle 3D PhantomX (ament_cmake)
+│   ├── urdf/phantomx.urdf       # 6 pattes × 3 DOF
+│   └── meshes/                  # STL (body, connect, thigh, tibia)
 └── hexapod_locomotion/          # Package Python
     ├── hexapod_locomotion/
-    │   ├── leg_ik.py            # Cinématique inverse 3-DOF
-    │   ├── gait_generator.py    # Démarches : tripod, wave, ripple
-    │   ├── locomotion_node.py   # Noeud principal
-    │   └── teleop_key_node.py   # Contrôle clavier
-    ├── urdf/                    # URDF/Xacro 6 pattes
-    ├── meshes/                  # Fichiers STL
-    ├── launch/                  # Fichiers launch
-    ├── config/                  # Paramètres YAML
-    └── rviz/                    # Configuration RViz
+    │   ├── phantom_kinematics.py # FK exacte (URDF) + IK numérique + démarche
+    │   ├── locomotion_node.py    # Noeud principal (TwistStamped → joints + odom)
+    │   ├── world_node.py         # Publie le sol (/environment)
+    │   ├── teleop_key_node.py    # Contrôle clavier
+    │   ├── leg_ik.py             # (ancien modèle analytique simplifié)
+    │   └── gait_generator.py     # (ancien générateur de démarche)
+    ├── launch/                   # Fichiers launch
+    ├── config/                   # Paramètres YAML
+    └── rviz/                     # Configuration RViz (fixed frame: base_link)
 ```
 
 ## Équipe

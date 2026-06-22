@@ -28,6 +28,7 @@ setup(
         'console_scripts': [
             'locomotion_node = hexapod_locomotion.locomotion_node:main',
             'teleop_key_node = hexapod_locomotion.teleop_key_node:main',
+            'world_node = hexapod_locomotion.world_node:main',
         ],
     },
 )

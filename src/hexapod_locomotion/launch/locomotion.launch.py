@@ -6,16 +6,19 @@ from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration, Command
 from launch_ros.actions import Node
+from launch_ros.parameter_descriptions import ParameterValue
 
 
 def generate_launch_description():
     pkg_share = get_package_share_directory('hexapod_locomotion')
+    desc_share = get_package_share_directory('phantomx_description')
 
-    urdf_file = os.path.join(pkg_share, 'urdf', 'hexapod.urdf.xacro')
+    urdf_file = os.path.join(desc_share, 'urdf', 'phantomx.urdf')
     rviz_file = os.path.join(pkg_share, 'rviz', 'hexapod.rviz')
     params_file = os.path.join(pkg_share, 'config', 'hexapod_params.yaml')
 
-    robot_description = Command(['xacro ', urdf_file])
+    robot_description = ParameterValue(
+        Command(['xacro ', urdf_file]), value_type=str)
 
     return LaunchDescription([
         DeclareLaunchArgument(
@@ -39,10 +42,16 @@ def generate_launch_description():
         ),
 
         Node(
+            package='hexapod_locomotion',
+            executable='world_node',
+            name='hexapod_world',
+            output='screen',
+        ),
+
+        Node(
             package='rviz2',
             executable='rviz2',
             arguments=['-d', rviz_file],
             output='screen',
-            condition=None,  # always launch; use_rviz handled at caller level
         ),
     ])
