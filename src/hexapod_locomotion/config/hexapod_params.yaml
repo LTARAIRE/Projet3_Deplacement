@@ -1,22 +1,20 @@
 hexapod_locomotion:
   ros__parameters:
-    # Body geometry
-    body_radius: 0.07
-    body_height: 0.15
+    # Boucle de contrôle
+    control_rate: 30.0
 
-    # Leg segment lengths (from URDF analysis)
-    coxa_length: 0.09
-    femur_length: 0.185
-    tibia_length: 0.250
+    # Démarche tripode
+    cycle_period: 1.0        # durée d'un cycle de marche (s)
+    duty: 0.5                # fraction du cycle en appui (tripode = 0.5)
+    step_height: 0.04        # hauteur de levée du pied (m)
+    max_stride: 0.12         # enjambée max de sécurité (m)
 
-    # Control loop rate (Hz)
-    control_rate: 50.0
+    # Sécurité / seuils
+    cmd_timeout: 0.5         # arrêt si plus de Twist reçu (s)
+    lin_deadband: 0.01       # m/s
+    ang_deadband: 0.03       # rad/s
 
-    # Gait parameters
-    gait_type: "tripod"      # tripod, wave, ripple
-    step_height: 0.04        # foot lift height (m)
-    cycle_period: 1.0        # gait cycle duration (s)
-
-    # Velocity limits
-    max_linear_speed: 0.3    # m/s
-    max_angular_speed: 1.0   # rad/s
+    # Pose / repères
+    base_height: 0.088       # hauteur du corps pour poser les pieds au sol (m)
+    odom_frame: "odom"
+    base_frame: "base_link"

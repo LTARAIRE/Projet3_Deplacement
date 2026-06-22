@@ -5,16 +5,19 @@ from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.substitutions import Command
 from launch_ros.actions import Node
+from launch_ros.parameter_descriptions import ParameterValue
 
 
 def generate_launch_description():
     pkg_share = get_package_share_directory('hexapod_locomotion')
+    desc_share = get_package_share_directory('phantomx_description')
 
-    urdf_file = os.path.join(pkg_share, 'urdf', 'hexapod.urdf.xacro')
+    urdf_file = os.path.join(desc_share, 'urdf', 'phantomx.urdf')
     rviz_file = os.path.join(pkg_share, 'rviz', 'hexapod.rviz')
     params_file = os.path.join(pkg_share, 'config', 'hexapod_params.yaml')
 
-    robot_description = Command(['xacro ', urdf_file])
+    robot_description = ParameterValue(
+        Command(['xacro ', urdf_file]), value_type=str)
 
     return LaunchDescription([
         Node(
@@ -38,6 +41,13 @@ def generate_launch_description():
             name='hexapod_teleop_key',
             output='screen',
             prefix='xterm -e',
+        ),
+
+        Node(
+            package='hexapod_locomotion',
+            executable='world_node',
+            name='hexapod_world',
+            output='screen',
         ),
 
         Node(
